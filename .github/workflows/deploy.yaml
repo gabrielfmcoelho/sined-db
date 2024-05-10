@@ -1,0 +1,51 @@
+name: Deploy DEV version to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PORT: 5432
+  GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  DB_USER: ${{ secrets.DB_USER }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  DB_NAME: ${{ secrets.DB_NAME }}
+  PROJECT_NAME: "sined-db"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - id: "auth"
+        uses: google-github-actions/auth@v1.1.1
+        with:
+          credentials_json: "${{ secrets.GCP_SA_KEY }}"
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Authorize Docker with gcloud
+        run: gcloud auth configure-docker -q
+      
+      - name: Build Docker image
+        run: |-
+          docker build --build-arg PORT=$PORT --build-arg GCP_SA_KEY="$GCP_SA_KEY" --build-arg GCP_PROJECT_ID="$GCP_PROJECT_ID" --build-arg DB_USER="$DB_USER" --build-arg DB_PASSWORD="$DB_PASSWORD" --build-arg DB_NAME="$DB_NAME" --tag gcr.io/$GCP_PROJECT_ID/$PROJECT_NAME:${{ github.sha }} .   
+      
+      - name: Push Docker image
+        run: |-
+          docker push gcr.io/$GCP_PROJECT_ID/PROJECT_NAME:${{ github.sha }}
+
+      - name: Deploy dev version to Cloud Run
+        run: |
+          gcloud run deploy PROJECT_NAME \
+            --image gcr.io/$GCP_PROJECT_ID/PROJECT_NAME:${{ github.sha }} \
+            --platform managed \
+            --region southamerica-east1 \
+            --allow-unauthenticated \
+            --port $PORT
