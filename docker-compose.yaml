@@ -11,26 +11,11 @@ services:
     networks:
       - sined-network
     ports:
-      - "5432:5432"
+      - "8080:5432"
     environment:
       POSTGRES_USER: sined
       POSTGRES_PASSWORD: sinedpass
       POSTGRES_DB: sined
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: sined-pgadmin-c
-    depends_on:
-      - postgres
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-    networks:
-      - sined-network
-    ports:
-      - "8000:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: gabrielcoelho@inovadata.tech
-      PGADMIN_DEFAULT_PASSWORD: sinedpass
 
 networks:
   sined-network:
