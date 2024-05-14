@@ -16,6 +16,12 @@ services:
       POSTGRES_USER: sined
       POSTGRES_PASSWORD: sinedpass
       POSTGRES_DB: sined
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+    restart: always
 
 networks:
   sined-network:
